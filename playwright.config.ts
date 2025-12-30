@@ -21,10 +21,15 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
+  // 2 para correr el set entero
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
+    // esto para correr el set entero con slowmo
+    launchOptions: {
+      slowMo: 500,
+    },
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: 'https://todoist.com',
 
