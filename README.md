@@ -47,7 +47,7 @@ Instalación y Uso
 
 Clonar el repositorio:
 
-git clone https://github.com/tu-usuario/todoist-automation.git
+git clone [https://github.com/tu-usuario/todoist-automation.git](https://github.com/NachoUgarte19/Todoist_Automation)
 
 Instalar dependencias:
 
