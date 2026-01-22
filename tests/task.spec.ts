@@ -16,7 +16,7 @@ test.describe('Gestión de Tareas @Smoke', () => {
     });
 
     test.afterEach(async ({ page }, testInfo) => {
-        const testsSinBorrado = ['TC002', 'TC005', 'TC004', 'TC008'];
+        const testsSinBorrado = ['TC002', 'TC005', 'TC004', 'TC008', 'TC009', 'TC010'];
         const saltarBorrado = testsSinBorrado.some(id => testInfo.title.includes(id));
 
         if (saltarBorrado) return;
@@ -168,4 +168,52 @@ test.describe('Gestión de Tareas @Smoke', () => {
 
     });
 
+    test('TC009 - Crear un proyecto', async ({ page }) => {
+        const projectName = `Proyecto ${Date.now()}`;
+
+        await taskPage.addProject(projectName);
+
+        await expect(page.getByRole('link', { name: `${projectName}, 0` })).toBeVisible();
+    });
+
+    test('TC010 - Mover una tarea en un proyecto específico', async ({ page }) => {
+        const projectName = `Proyecto_${Date.now()}`;
+        const taskToMove = `Tarea_Mover_${Date.now()}`;
+
+        await taskPage.addProject(projectName);
+
+        // En lugar de esperar el heading, esperamos a que la URL contenga 'project'
+        await page.waitForURL('**/app/project/**');
+        await page.waitForTimeout(2000); // Espera la sincronización interna de Todoist después de la creación del proyecto
+
+        // NAVEGACIÓN DIRECTA al Inbox
+        await page.goto('https://app.todoist.com/app/inbox');
+        await expect(page.getByRole('heading', { name: 'Bandeja de entrada' })).toBeVisible();
+
+        await taskPage.createTask(taskToMove);
+
+        await taskPage.moveTaskToProject(taskToMove, projectName);
+
+        // NAVEGACIÓN DIRECTA al Proyecto para verificar.
+        const projectLink = page.getByRole('link', { name: projectName }).first();
+        await projectLink.click();
+
+        await expect(page.getByText(taskToMove)).toBeVisible();
+    });
+
+    test('TC006 - Verificar que se pueda crear tarea con título, descripción y fecha', async ({ page }) => {
+        const taskDate = 'mañana';
+
+        await taskPage.createTask(
+            taskName,
+            taskDescription,
+            'Prioridad 4',
+            taskDate
+        );
+
+        const dynamicRegex = new RegExp(taskDate, 'i');
+
+        await expect(page.getByTestId('task-info-tags').getByTestId('due-date-control'))
+            .toHaveText(dynamicRegex);
+    });
 });

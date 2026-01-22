@@ -11,6 +11,12 @@ export class TaskPage {
     readonly discardButton: Locator;
     readonly viewButton: Locator;
     readonly resetFiltersButton: Locator;
+    readonly myProjectsMenu: Locator;
+    readonly addProjectButton: Locator;
+    readonly nameProjectInput: Locator;
+    readonly addProjectSubmitButton: Locator;
+    readonly dateButton: Locator;
+    readonly dateInput: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -23,17 +29,12 @@ export class TaskPage {
         this.discardButton = page.getByRole('button', { name: 'Descartar' });
         this.viewButton = page.getByRole('button', { name: 'Opciones del menú' });
         this.resetFiltersButton = page.getByRole('button', { name: 'Restablecer todo' })
-
-    }
-
-    /**
-   //Retorna el locator del botón editar para una tarea específica.
- * @param taskName El nombre de la tarea tal cual aparece en la UI
- */
-    getEditButtonByTaskName(taskName: string): Locator {
-        return this.page
-            .getByRole('button', { name: `Tarea: ${taskName}` })
-            .getByLabel('Editar');
+        this.myProjectsMenu = page.getByRole('button', { name: 'Menú Mis Proyectos' });
+        this.addProjectButton = page.getByRole('menuitem', { name: 'Añadir proyecto' });
+        this.nameProjectInput = page.getByRole('textbox', { name: 'Nombre' });
+        this.addProjectSubmitButton = page.getByRole('button', { name: 'Añadir' });
+        this.dateButton = page.getByRole('button', { name: 'Establecer fecha' });
+        this.dateInput = page.getByRole('textbox', { name: 'Escribe una fecha' });
     }
 
     getTaskItem(taskName: string) {
@@ -54,10 +55,23 @@ export class TaskPage {
     async createTask(
         name: string,
         description?: string,
-        priority: 'Prioridad 1' | 'Prioridad 2' | 'Prioridad 3' | 'Prioridad 4' = 'Prioridad 4') {
+        priority: 'Prioridad 1' | 'Prioridad 2' | 'Prioridad 3' | 'Prioridad 4' = 'Prioridad 4',
+        date?: string,) {
 
         await this.addTaskButton.click();
         await this.taskInput.fill(name);
+
+        if (date) {
+            // 1. Clic en el botón de fecha (usualmente dice "Hoy" o "Vencimiento")
+            await this.dateButton.click();
+
+            // 2. Todoist abre un input pequeño para escribir la fecha
+            await this.dateInput.fill(date);
+
+            // 3. Presionamos Enter para confirmar la fecha en ese input
+            await this.dateInput.press('Enter');
+            await expect(this.dateInput).toBeHidden();
+        }
 
         if (description) {
             await this.descriptionInput.fill(description);
@@ -111,7 +125,7 @@ export class TaskPage {
 
     async filterByPriority(priority: 'Prioridad 1' | 'Prioridad 2' | 'Prioridad 3' | 'Prioridad 4') {
         this.viewButton.click();
-        
+
         await this.page.getByRole('combobox', { name: 'Prioridad' }).click();
         await this.page.getByRole('option', { name: priority }).click();
 
@@ -126,4 +140,25 @@ export class TaskPage {
         }
     }
 
+    async addProject(projectName: string) {
+        await this.myProjectsMenu.click();
+        await this.addProjectButton.click();
+        await this.nameProjectInput.fill(projectName);
+        await this.addProjectSubmitButton.click();
+
+        await expect(this.nameProjectInput).toBeHidden();
+
+    }
+
+    async moveTaskToProject(taskName: string, projectName: string) {
+        const taskItem = this.page.locator('.task_list_item').filter({ hasText: taskName });
+
+        await taskItem.hover();
+        await this.page.getByRole('button', { name: taskName }).getByTestId('more_menu').click();
+
+        await this.page.getByRole('menuitem', { name: 'Mover a… V' }).click();
+
+        await this.page.getByRole('option', { name: projectName }).click();
+
+    }
 }
